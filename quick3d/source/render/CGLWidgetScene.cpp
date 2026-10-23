@@ -294,8 +294,7 @@ void CGLWidgetScene::setupEnvironment(CRenderContext* pContext, QOpenGLShaderPro
         pProgram->setUniformValueArray("u_light_occlusion", u_light_occlusion, MAX_GL_LIGHTS, 1);
 
         pProgram->setUniformValue("u_fog_enable", (GLint) m_tFog.enabled() ? 1 : 0);
-        pProgram->setUniformValue("u_fog_distance", (GLfloat) (m_tFog.distance() * pContext->layerScale()));
-        pProgram->setUniformValue("u_layer_scale", (GLfloat) pContext->layerScale());
+        pProgram->setUniformValue("u_fog_distance", (GLfloat) m_tFog.distance());
         pProgram->setUniformValue("u_fog_color", QVector3D(m_tFog.color().X, m_tFog.color().Y, m_tFog.color().Z));
         pProgram->setUniformValue("u_fog_level", (GLfloat) m_tFog.level());
 

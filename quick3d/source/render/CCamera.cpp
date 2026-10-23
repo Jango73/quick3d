@@ -202,18 +202,16 @@ bool CCamera::skipDepthInterval(double dDepthMin, double dDepthMax) const
 
     if (tOwn.isValid() == false) return false;
 
-    // The collect interval is measured with the scaled pass matrices, the stored
-    // ranges are real: compare in real space so every layer scale stays exact
-    double dRealMin = dDepthMin / m_dCurrentLayerScale;
-    double dRealMax = dDepthMax / m_dCurrentLayerScale;
-
-    if (dRealMax < tOwn.m_dNear || dRealMin > tOwn.m_dFar) return true;
+    // The collect interval and the stored ranges are both real: the reduced-size
+    // factor lives only in the component model matrices at draw time, collection
+    // and culling stay in real space so every layer scale stays exact
+    if (dDepthMax < tOwn.m_dNear || dDepthMin > tOwn.m_dFar) return true;
 
     QVector<SRenderDepthRange> vNearer = nearerLayerRanges();
 
     foreach (const SRenderDepthRange& tNearer, vNearer)
     {
-        if (tNearer.m_dNear <= dRealMin && dRealMax <= tNearer.m_dFar) return true;
+        if (tNearer.m_dNear <= dDepthMin && dDepthMax <= tNearer.m_dFar) return true;
     }
 
     return false;
@@ -575,8 +573,11 @@ void CCamera::render(C3DScene* pScene, CViewport* pViewport, bool bForceWideFOV,
                 glDepthMask(GL_FALSE);
             }
 
-            m_dMinDistance = tScaledRange.m_dNear;
-            m_dMaxDistance = tScaledRange.m_dFar;
+            // The reduced-size factor lives only in the component model matrices:
+            // the camera matrices and the frustum stay real, only the projection
+            // uses the compressed depth interval matching the scaled models
+            m_dMinDistance = tRange.m_dNear;
+            m_dMaxDistance = tRange.m_dFar;
 
             QMatrix4x4 mLayerProjection = CCamera::getQtProjectionMatrix(
                         dFOV,
@@ -587,26 +588,21 @@ void CCamera::render(C3DScene* pScene, CViewport* pViewport, bool bForceWideFOV,
 
             CMatrix4 mLayerInternalProjection = CMatrix4::fromQtMatrix(mLayerProjection);
 
-            QMatrix4x4 mLayerCameraMatrix = CRenderScalePolicy::scaledViewMatrix(mCameraMatrix, tLayer.scale());
-            CMatrix4 mLayerInternalCameraMatrix = CRenderScalePolicy::scaledInternalViewMatrix(m_mInternalCameraMatrix, tLayer.scale());
-
             CRenderContext tLayerContext(
-                        mLayerProjection, mLayerCameraMatrix,
+                        mLayerProjection, mCameraMatrix,
                         mShadowProjectionMatrix, mShadowMatrix,
-                        mLayerInternalCameraMatrix,
+                        m_mInternalCameraMatrix,
                         mLayerInternalProjection,
                         pScene,
                         this
                         );
-
-            tLayerContext.setLayerScale(tLayer.scale());
 
             if (bForceIR)
             {
                 tLayerContext.bUseIR = true;
             }
 
-            computeFrustum(Math::Angles::toRad(dFOV), dAspectRatio, tScaledRange.m_dNear, tScaledRange.m_dFar);
+            computeFrustum(Math::Angles::toRad(dFOV), dAspectRatio, tRange.m_dNear, tRange.m_dFar);
 
             m_sCurrentPaintLayer = tLayer.name();
             m_dCurrentLayerScale = tLayer.scale();
@@ -629,8 +625,8 @@ void CCamera::render(C3DScene* pScene, CViewport* pViewport, bool bForceWideFOV,
 
             LAYER_FRAME_INFO tFrameInfo;
             tFrameInfo.m_sLayer = tLayer.name();
-            tFrameInfo.m_dNearPlane = tScaledRange.m_dNear;
-            tFrameInfo.m_dFarPlane = tScaledRange.m_dFar;
+            tFrameInfo.m_dNearPlane = tRange.m_dNear;
+            tFrameInfo.m_dFarPlane = tRange.m_dFar;
             tFrameInfo.m_tStatistics = tLayerContext.tStatistics;
 
             {

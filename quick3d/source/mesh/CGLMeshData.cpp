@@ -6,6 +6,8 @@
 // Application
 #include "CGLMeshData.h"
 #include "C3DScene.h"
+#include "CCamera.h"
+#include "CRenderScalePolicy.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -147,7 +149,24 @@ void CGLMeshData::paint(CRenderContext* pContext, const QMatrix4x4& mModelAbsolu
             pProgram->setUniformValue("u_camera_matrix", pContext->cameraMatrix());
             pProgram->setUniformValue("u_shadow_projection_matrix", pContext->shadowProjectionMatrix());
             pProgram->setUniformValue("u_shadow_matrix", pContext->shadowMatrix());
-            pProgram->setUniformValue("u_model_matrix", mModelAbsolute);
+
+            // The reduced-size factor lives only in the component transform:
+            // the model matrix is scaled about the camera, the camera matrices stay unscaled
+            QMatrix4x4 mScaledModel = mModelAbsolute;
+
+            if (pContext != nullptr && pContext->camera() != nullptr && pContext->scene() != nullptr)
+            {
+                double dScale = pContext->camera()->currentLayerScale();
+
+                if (dScale != 1.0)
+                {
+                    Math::CVector3 vCamera = pContext->camera()->worldPosition() - pContext->scene()->worldOrigin();
+
+                    mScaledModel = CRenderScalePolicy::scaledModelMatrix(mModelAbsolute, vCamera, dScale);
+                }
+            }
+
+            pProgram->setUniformValue("u_model_matrix", mScaledModel);
 
             GL_glBindBuffer(GL_ARRAY_BUFFER, m_iVBO[0]);
             GL_glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_iVBO[1]);

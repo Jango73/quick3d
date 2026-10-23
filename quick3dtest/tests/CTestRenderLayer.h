@@ -58,7 +58,7 @@ private slots:
     //! Reduced-size rendering preserves angular size and distance ratio
     void testScalePreservesAngularSize();
 
-    //! View-space scaling matches the world-space scale about the camera
+    //! Model scaling matches the world-space scale about the camera
     void testViewSpaceScaleMatchesWorldSpace();
 
     //! A scaled pass keeps the clip coordinates of the full-size pass

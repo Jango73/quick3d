@@ -372,7 +372,7 @@ void CTestRenderLayer::testScalePreservesAngularSize()
 
 /***************************************************************************/
 /*!
-* \brief View-space scaling matches the world-space scale about the camera.
+* \brief Model scaling matches the world-space scale about the camera.
 */
 /***************************************************************************/
 void CTestRenderLayer::testViewSpaceScaleMatchesWorldSpace()
@@ -381,15 +381,27 @@ void CTestRenderLayer::testViewSpaceScaleMatchesWorldSpace()
     const Math::CVector3 vPoint(1000100.0, 2000050.0, 6371200.0);
     const double dScale = 0.01;
 
-    Math::CMatrix4 mView = CCamera::getInternalCameraMatrix(vCamera, Math::CVector3(0.0, 0.0, 0.0));
+    QMatrix4x4 mModel;
+    mModel.setToIdentity();
+    mModel.translate((float) vPoint.X, (float) vPoint.Y, (float) vPoint.Z);
+
+    QMatrix4x4 mScaledModel = CRenderScalePolicy::scaledModelMatrix(mModel, vCamera, dScale);
+
+    const QVector4D vVertex(10.0f, -5.0f, 3.0f, 1.0f);
+
+    QVector4D vFull = mModel * vVertex;
+    QVector4D vScaled = mScaledModel * vVertex;
+
+    Math::CVector3 vFullPosition(vFull.x(), vFull.y(), vFull.z());
+    Math::CVector3 vScaledPosition(vScaled.x(), vScaled.y(), vScaled.z());
+    Math::CVector3 vExpected = CRenderScalePolicy::scaledPosition(vCamera, vFullPosition, dScale);
+
+    QVERIFY((vScaledPosition - vExpected).magnitude() < 1.0);
+
     Math::CMatrix4 mScaleAboutCamera = CRenderScalePolicy::scaleAboutCameraMatrix(vCamera, dScale);
+    Math::CVector3 vMatrixPath = mScaleAboutCamera * vFullPosition;
 
-    Math::CVector3 vViewPath = CRenderScalePolicy::scaledInternalViewMatrix(mView, dScale) * vPoint;
-    Math::CVector3 vWorldPath = mView * CRenderScalePolicy::scaledPosition(vCamera, vPoint, dScale);
-    Math::CVector3 vMatrixPath = mView * (mScaleAboutCamera * vPoint);
-
-    QVERIFY((vViewPath - vWorldPath).magnitude() < 0.001);
-    QVERIFY((vViewPath - vMatrixPath).magnitude() < 0.001);
+    QVERIFY((vMatrixPath - vExpected).magnitude() < 0.001);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -413,18 +425,25 @@ void CTestRenderLayer::testScaledPassKeepsClipCoordinates()
     QMatrix4x4 mView = CCamera::getQtCameraMatrix(vCamera, vRotation);
     QMatrix4x4 mProjection = CCamera::getQtProjectionMatrix(dFieldOfView, dAspectRatio, dNear, dFar);
     QMatrix4x4 mScaledProjection = CCamera::getQtProjectionMatrix(dFieldOfView, dAspectRatio, dNear * dScale, dFar * dScale);
-    QMatrix4x4 mScaledView = CRenderScalePolicy::scaledViewMatrix(mView, dScale);
 
     const QVector3D vPoints[] = {
-        QVector3D(30.0, -20.0, 5000.0),
-        QVector3D(-150.0, 80.0, 50000.0),
-        QVector3D(12.0, 7.0, 300000.0)
+        QVector3D(30.0f, -20.0f, 5000.0f),
+        QVector3D(-150.0f, 80.0f, 50000.0f),
+        QVector3D(12.0f, 7.0f, 300000.0f)
     };
 
     for (unsigned int iIndex = 0; iIndex < sizeof(vPoints) / sizeof(vPoints[0]); iIndex++)
     {
-        QVector4D vClip = mProjection * mView * QVector4D(vPoints[iIndex], 1.0);
-        QVector4D vScaledClip = mScaledProjection * mScaledView * QVector4D(vPoints[iIndex], 1.0);
+        QMatrix4x4 mModel;
+        mModel.setToIdentity();
+        mModel.translate(vPoints[iIndex]);
+
+        QMatrix4x4 mScaledModel = CRenderScalePolicy::scaledModelMatrix(mModel, vCamera, dScale);
+
+        QVector4D vVertex(0.0f, 0.0f, 0.0f, 1.0f);
+
+        QVector4D vClip = mProjection * mView * mModel * vVertex;
+        QVector4D vScaledClip = mScaledProjection * mView * mScaledModel * vVertex;
 
         QVERIFY(vClip.w() != 0.0);
         QVERIFY(vScaledClip.w() != 0.0);

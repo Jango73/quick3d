@@ -50,8 +50,6 @@ public:
 
     QMatrix4x4&         cameraProjectionMatrix()    { return m_mCameraProjectionMatrix; }
     QMatrix4x4&         cameraMatrix()              { return m_mCameraMatrix; }
-    double              layerScale() const          { return m_dLayerScale; }
-    void                setLayerScale(double dValue) { m_dLayerScale = dValue; }
     QMatrix4x4&         shadowProjectionMatrix()    { return m_mShadowProjectionMatrix; }
     QMatrix4x4&         shadowMatrix()              { return m_mShadowMatrix; }
     Math::CMatrix4&     internalCameraMatrix()      { return m_mInternalCameraMatrix; }
@@ -81,6 +79,5 @@ protected:
     CMeshByMaterial*    m_pMeshByMaterial;
     CCamera*            m_pCamera;
     CFog*               m_pFog;
-    double              m_dLayerScale;
 
 };

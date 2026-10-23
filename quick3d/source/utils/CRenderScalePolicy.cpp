@@ -49,30 +49,25 @@ CMatrix4 CRenderScalePolicy::scaleAboutCameraMatrix(const CVector3& vCamera, dou
 //-------------------------------------------------------------------------------------------------
 
 /*!
-    Returns S(k) * \a mView, the render path application of the same transform. \br\br
-    The view origin is the camera position, so a view-space uniform scale equals the
-    world-space scale about the camera, with unchanged orientation and no per-object path.
+    Returns T(C) * S(k) * T(-C) * \a mModel, the component model matrix scaled about \a vCamera. \br\br
+    \a vCamera is expressed in the model frame (world position minus world origin).
+    The camera matrices stay unscaled, only the component transform carries the factor.
 */
-QMatrix4x4 CRenderScalePolicy::scaledViewMatrix(const QMatrix4x4& mView, double dScale)
+QMatrix4x4 CRenderScalePolicy::scaledModelMatrix(const QMatrix4x4& mModel, const CVector3& vCamera, double dScale)
 {
+    QMatrix4x4 mToOrigin;
+    mToOrigin.setToIdentity();
+    mToOrigin.translate(-vCamera.X, -vCamera.Y, -vCamera.Z);
+
     QMatrix4x4 mScale;
     mScale.setToIdentity();
     mScale.scale(dScale, dScale, dScale);
 
-    return mScale * mView;
-}
+    QMatrix4x4 mBack;
+    mBack.setToIdentity();
+    mBack.translate(vCamera.X, vCamera.Y, vCamera.Z);
 
-//-------------------------------------------------------------------------------------------------
-
-/*!
-    Returns S(k) * \a mView on the internal double-precision matrix. \br\br
-    The internal matrices compose row-vector style, the scale applies after the view.
-*/
-CMatrix4 CRenderScalePolicy::scaledInternalViewMatrix(const CMatrix4& mView, double dScale)
-{
-    CMatrix4 mScaled = mView;
-
-    return mScaled * CMatrix4::makeScale(CVector3(dScale, dScale, dScale));
+    return mBack * mScale * mToOrigin * mModel;
 }
 
 //-------------------------------------------------------------------------------------------------

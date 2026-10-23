@@ -78,7 +78,6 @@ uniform float           u_wave_amplitude;
 uniform int             u_fog_enable;
 uniform float           u_fog_distance;
 uniform float           u_fog_level;
-uniform float           u_layer_scale;
 uniform vec3            u_fog_color;
 uniform vec3            u_sky_zenith_color;
 uniform vec3            u_sun_color;
@@ -973,15 +972,15 @@ vec3 getNormal()
             vec3 normal_2 = vec3(0.0, 0.0, 0.0);
             vec3 normal_3 = vec3(0.0, 0.0, 0.0);
 
-            if (vo_distance / u_layer_scale < 1000.0)
+            if (vo_distance < 1000.0)
             {
-                float factor = (1000.0 - vo_distance / u_layer_scale) / 1000.0;
+                float factor = (1000.0 - vo_distance) / 1000.0;
                 normal_2 = oceanNormal(vo_texcoord, 3.0, 0.5, small_amplitude).xyz * factor;
             }
 
-            if (vo_distance / u_layer_scale < 500.0)
+            if (vo_distance < 500.0)
             {
-                float factor = (500.0 - vo_distance / u_layer_scale) / 500.0;
+                float factor = (500.0 - vo_distance) / 500.0;
                 normal_3 = oceanNormal(vo_texcoord * -1.0, 10.0, 2.0, small_amplitude).xyz * factor;
             }
 
@@ -1095,10 +1094,10 @@ void main()
         float pixelDistance = 1.0;
         float pixelIncidence = 0.0;
 
-        if (vo_distance / u_layer_scale > 0.0 && vo_distance / u_layer_scale < 10000.0)
+        if (vo_distance > 0.0 && vo_distance < 10000.0)
         {
             // The normalized distance
-            pixelDistance = (vo_distance / u_layer_scale) / 10000.0;
+            pixelDistance = vo_distance / 10000.0;
 
             // The eye-to-vertex vector
             vec3 eyeToVertex = normalize(vo_position - u_camera_position);
@@ -1114,9 +1113,9 @@ void main()
     {
         if (bool(u_rendering_shadows))
         {
-            if (vo_distance / u_layer_scale >= 1.0 && vo_distance / u_layer_scale < 2000.0)
+            if (vo_distance >= 1.0 && vo_distance < 2000.0)
             {
-                float d = ((vo_distance / u_layer_scale) - 1.0) / 1999.0;
+                float d = (vo_distance - 1.0) / 1999.0;
 
                 gl_FragColor = vec4(d, d, d, 1.0);
             }
@@ -1184,7 +1183,7 @@ void main()
                         float v2 = movingTurbulence(vo_texcoord * 3.0, 0.5) * largeAmplitude;
                         float v3 = 0.0;
 
-                        if (vo_distance / u_layer_scale < 500.0)
+                        if (vo_distance < 500.0)
                         {
                             v3 = movingTurbulence(vo_texcoord * 20.0, 0.7) * smallAmplitude;
                         }

@@ -199,7 +199,7 @@ public:
     //! Returns the conditioned range of the layer painted by the current render pass, invalid outside a layer pass
     SRenderDepthRange currentLayerRange() const;
 
-    //! Returns the reduced-size factor of the layer painted by the current render pass, 1.0 outside a layer pass
+    //! Returns the reduced-size factor of the layer painted by the current render pass, 1.0 outside a layer pass, applied at the component model matrices only
     double currentLayerScale() const { return m_dCurrentLayerScale; }
 
     //! Returns the conditioned ranges of the layers painted after the current one, nearest last in paint order

@@ -31,7 +31,6 @@ CRenderContext::CRenderContext(
     , m_pCamera(pCamera)
     , m_pMeshByMaterial(new CMeshByMaterial())
     , m_pFog(nullptr)
-    , m_dLayerScale(1.0)
     , bUseIR(false)
     , bUseInversePolarity(false)
     , pActiveMaterial(nullptr)
