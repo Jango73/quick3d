@@ -15,7 +15,7 @@ Qt-based 3D engine with geo-referenced entities (C++/Qt), built with CMake for Q
 - `third/`: vendored third-party code (`SFML-1.6`, `unzip11`, `zlib` as git submodule). Do not add new third-party dependencies without asking.
 - `quick3d/blender/`: Blender Q3D export script (Python, existing exception to the C++ rule below).
 
-Fresh clones have empty `qt-plus/` and `third/zlib/` until submodules are initialized (`git submodule update --init --recursive`). Rendering is `QOpenGLWidget`-based, the engine targets **Qt6** (Qt 6.2.4 on this machine); the legacy `.pro`/`.pri` files are kept for QtCreator users but the reference Linux build is CMake. `QGL*` classes are gone: use `QOpenGL*`.
+Fresh clones have empty `qt-plus/` and `third/zlib/` until submodules are initialized (`git submodule update --init --recursive`). Rendering is `QOpenGLWidget`-based, the engine targets Qt6 (Qt 6.2.4 on this machine); the legacy `.pro`/`.pri` files are kept for QtCreator users but the reference Linux build is CMake. `QGL*` classes are gone: use `QOpenGL*`.
 
 ## Release vs debug
 - Work and build in RELEASE mode. DEBUG is used when tracking bugs (hence its name) : either when debug logs or an attachement with a debugger is needed.
@@ -28,49 +28,49 @@ Fresh clones have empty `qt-plus/` and `third/zlib/` until submodules are initia
 - NEVER create a commit unless the user explicitly asks for it in the current conversation.
 
 ## Architecture and Reuse Rules
-- Bidirectional coupling is **STRICTLY FORBIDDEN**, both when writing code from scratch and when delivering a fix. Keep dependencies unidirectional and break cycles instead of introducing or preserving them.
+- Bidirectional coupling is STRICTLY FORBIDDEN, both when writing code from scratch and when delivering a fix. Keep dependencies unidirectional and break cycles instead of introducing or preserving them.
 - Any behavior likely to appear in multiple places (filtering, interpolation, averaging, logging, XML access, geo math) MUST be implemented as a reusable module in `qt-plus/source/cpp` or, if engine-specific, in `quick3d/source/utils`.
 - Before adding local logic in a component/generator/subsystem, check `qt-plus/source/cpp` and `quick3d/source/utils` first. If no suitable module exists, create a generic one and use it from the caller.
 - Component code should only express policy/usage, not duplicate generic mechanics.
 - For log-flood control, add a shared helper in `qt-plus`/`utils` and use it everywhere; do not hardcode ad-hoc counters/cooldowns inside modules.
-- **Container usage**: this rule applies to the whole engine. Use Qt containers (`QVector`, `QMap`) and shared ownership (`QSP`, see below). Do not introduce custom linked-list infrastructure.
-- **Mutex ownership**: this rule applies to the whole engine (worker queue in `CWorkerManager`, chunk mutex in `CWorldChunk`, ...). Never lock another object's mutex directly to inspect or mutate its internal state. Expose owner-side getters/setters/snapshot helpers, keep critical sections short, and never recurse or call callbacks/messages while holding structural object locks.
-- **Public headers**: `quick3d_global.h` and the headers consumed by downstream apps (`Quick3DTest`). Keep them app-safe: no internals that break downstream includes, no platform-only constructs leaking into the shared include surface.
+- Container usage: this rule applies to the whole engine. Use Qt containers (`QVector`, `QMap`) and shared ownership (`QSP`, see below). Do not introduce custom linked-list infrastructure.
+- Mutex ownership: this rule applies to the whole engine (worker queue in `CWorkerManager`, chunk mutex in `CWorldChunk`, ...). Never lock another object's mutex directly to inspect or mutate its internal state. Expose owner-side getters/setters/snapshot helpers, keep critical sections short, and never recurse or call callbacks/messages while holding structural object locks.
+- Public headers: `quick3d_global.h` and the headers consumed by downstream apps (`Quick3DTest`). Keep them app-safe: no internals that break downstream includes, no platform-only constructs leaking into the shared include surface.
 
 ## Coding Conventions
-- **Types**: Use the engine math types (`CGeoloc`, `CVector2/3/4`, `CMatrix4`, ...) and Qt types where they exist instead of introducing parallel raw-C representations. `double` for geo math.
-- **Dependencies**: This is a Qt user-space project. Qt and the STL are allowed. Do NOT add new third-party libraries/modules (vendored or system) without asking; `third/` is the only place for vendored code.
-- **Debugging**: Debug output is logged with `LOG_METHOD_DEBUG()` (qt-plus `CLogger`), warnings with `LOG_WARNING()`/`LOG_METHOD_WARNING()`, errors with `LOG_ERROR()`/`LOG_METHOD_ERROR()`.
-- **Test-app failure visibility**: Any failure/error message shown on screen in `Quick3DTest` MUST also be emitted through `CLogger` with equivalent content. No failure must appear only on screen without a corresponding log entry.
-- **Logging**: `CLogger` already prefixes method context via the `LOG_METHOD_*` macros. Keep messages short at `Warning` level and above.
-- **WARNING/ERROR semantics**: `LOG_WARNING()` and `LOG_ERROR()` are human-facing alerts. They MUST stay short, actionable, and understandable without deep protocol knowledge.
-- **Diagnostic dumps**: Detailed diagnostics (mesh internals, face/vertex dumps, retry traces, step-by-step instrumentation) MUST use `LOG_DEBUG()`/`LOG_METHOD_DEBUG()` only, never warning or error level.
-- **TEXT literals**: Write log/UI messages directly as `QString`.
-- **Magic number**: NEVER introduce magic numbers or magic strings. Always declare reusable values in named constants.
-- **Declaration order**: Group declarations by type. 1: macros / 2: type definitions / 3: inline functions / 4: external functions / 5: other
-- **Function order**: DO NOT OVERUSE forward declarations. Define functions before they are used.
-- **I18n**: Write comments, console output and technical doc in english.
-- **Naming**: PascalCase for classes/variables/members (`C`-prefixed classes, `m_`/`g_`/`p_` prefixes as in the existing code), SCREAMING_SNAKE_CASE for structs/defines.
-- **Naming clarity**: In addition to using full words, every name must express its intent clearly and without ambiguity.
-- **Comments**: For single-line comments, use `//`, not `/*`.
-- **Style**: 4-space indentation. Match surrounding code instead of reformatting whole files.
-- **Pointer style**: Never put a space between the type and the pointer asterisk. Write `char* Pointer`, never `char *Pointer`.
-- **Numbers**: Hexadecimal for constant numbers, except for sizes, vectors, points and time.
-- **Number suffixes**: Do not add numeric suffixes like `u` to constants; they are not wanted here.
-- **Documentation**: Update `quick3d/doc/` when adding/modifying engine components. Both library `.pro` files run `qdoc` as a post-link step (`Quick3D.qdocconf`, `qt-plus.qdocconf`); keep the qdoc comments compiling.
-- **Documentation wording**: Use timeless technical wording. Do not use temporal terms like "now", "currently", "at this time" in documentation/comments.
-- **Resource paths**: Scenes, models and textures resolve relative to `quick3dtest/bin/` (`models/`, `textures/`, `*.xml`). Never hardcode absolute paths.
-- **Languages**: C++ for engine and test app, avoid Python (the Blender Q3D export script is the existing exception).
-- **Unused parameters**: Use `Q_UNUSED()` to suppress the "unused parameter" warning.
-- **Shared ownership**: Components (`CComponent` inherits `QSharedData`) are held by `QSP` (`QExplicitlySharedDataPointer`, see `CQ3DConstants.h`). Null-check `QSP`s before use, cast with `QSP_CAST`, and NEVER wrap an already-owned `this` in a fresh `QSP` (second ownership chain = double-delete; see `TerrainSecondaryIssues.md` #1).
-- **Component lifetime**: Never manually `delete` a component still referenced by `QSP`s. Clearing links goes through `clearLinks()`; terrain data through `clearTerrain()`.
-- **Threading**: `CWorker`/`CWorkerManager` is the background-build pool. Never block a worker thread waiting on another worker (see `TerrainHolesAnalysis.md` #1). Plain-`bool` cross-thread flags are a known race (see `TerrainSecondaryIssues.md` #2): prefer atomics or mutexes for new code.
-- **Component factory**: `CComponentFactory` instantiators return `nullptr` for unknown classes; callers MUST null-check before use.
-- **Clean code**: No duplicate code. Create intermediate functions to avoid it. This also applies to data: create intermediate structures to avoid duplicating data.
-- **No globals**: Before adding a global variable, **ALWAYS ASK** if permitted.
-- **Functions**: Add a doxygen header to functions and separate all functions with a 75 character line such as : /************************************************************************/
-- **File size**: Keep source files under 1000 lines; split by responsibility before crossing this limit.
-- **Vocabulary**:
+- Types: Use the engine math types (`CGeoloc`, `CVector2/3/4`, `CMatrix4`, ...) and Qt types where they exist instead of introducing parallel raw-C representations. `double` for geo math.
+- Dependencies: This is a Qt user-space project. Qt and the STL are allowed. Do NOT add new third-party libraries/modules (vendored or system) without asking; `third/` is the only place for vendored code.
+- Debugging: Debug output is logged with `LOG_METHOD_DEBUG()` (qt-plus `CLogger`), warnings with `LOG_WARNING()`/`LOG_METHOD_WARNING()`, errors with `LOG_ERROR()`/`LOG_METHOD_ERROR()`.
+- Test-app failure visibility: Any failure/error message shown on screen in `Quick3DTest` MUST also be emitted through `CLogger` with equivalent content. No failure must appear only on screen without a corresponding log entry.
+- Logging: `CLogger` already prefixes method context via the `LOG_METHOD_*` macros. Keep messages short at `Warning` level and above.
+- WARNING/ERROR semantics: `LOG_WARNING()` and `LOG_ERROR()` are human-facing alerts. They MUST stay short, actionable, and understandable without deep protocol knowledge.
+- Diagnostic dumps: Detailed diagnostics (mesh internals, face/vertex dumps, retry traces, step-by-step instrumentation) MUST use `LOG_DEBUG()`/`LOG_METHOD_DEBUG()` only, never warning or error level.
+- TEXT literals: Write log/UI messages directly as `QString`.
+- Magic number: NEVER introduce magic numbers or magic strings. Always declare reusable values in named constants.
+- Declaration order: Group declarations by type. 1: macros / 2: type definitions / 3: inline functions / 4: external functions / 5: other
+- Function order: DO NOT OVERUSE forward declarations. Define functions before they are used.
+- I18n: Write comments, console output and technical doc in english.
+- Naming: PascalCase for classes/variables/members (`C`-prefixed classes, `m_`/`g_`/`p_` prefixes as in the existing code), SCREAMING_SNAKE_CASE for structs/defines.
+- Naming clarity: In addition to using full words, every name must express its intent clearly and without ambiguity.
+- Comments: For single-line comments, use `//`, not `/*`.
+- Style: 4-space indentation. Match surrounding code instead of reformatting whole files.
+- Pointer style: Never put a space between the type and the pointer asterisk. Write `char* Pointer`, never `char *Pointer`.
+- Numbers: Hexadecimal for constant numbers, except for sizes, vectors, points and time.
+- Number suffixes: Do not add numeric suffixes like `u` to constants; they are not wanted here.
+- Documentation: Update `quick3d/doc/` when adding/modifying engine components. Both library `.pro` files run `qdoc` as a post-link step (`Quick3D.qdocconf`, `qt-plus.qdocconf`); keep the qdoc comments compiling.
+- Documentation wording: Use timeless technical wording. Do not use temporal terms like "now", "currently", "at this time" in documentation/comments.
+- Resource paths: Scenes, models and textures resolve relative to `quick3dtest/bin/` (`models/`, `textures/`, `*.xml`). Never hardcode absolute paths.
+- Languages: C++ for engine and test app, avoid Python (the Blender Q3D export script is the existing exception).
+- Unused parameters: Use `Q_UNUSED()` to suppress the "unused parameter" warning.
+- Shared ownership: Components (`CComponent` inherits `QSharedData`) are held by `QSP` (`QExplicitlySharedDataPointer`, see `CQ3DConstants.h`). Null-check `QSP`s before use, cast with `QSP_CAST`, and NEVER wrap an already-owned `this` in a fresh `QSP` (second ownership chain = double-delete; see `TerrainSecondaryIssues.md` #1).
+- Component lifetime: Never manually `delete` a component still referenced by `QSP`s. Clearing links goes through `clearLinks()`; terrain data through `clearTerrain()`.
+- Threading: `CWorker`/`CWorkerManager` is the background-build pool. Never block a worker thread waiting on another worker (see `TerrainHolesAnalysis.md` #1). Plain-`bool` cross-thread flags are a known race (see `TerrainSecondaryIssues.md` #2): prefer atomics or mutexes for new code.
+- Component factory: `CComponentFactory` instantiators return `nullptr` for unknown classes; callers MUST null-check before use.
+- Clean code: No duplicate code. Create intermediate functions to avoid it. This also applies to data: create intermediate structures to avoid duplicating data.
+- No globals: Before adding a global variable, ALWAYS ASK if permitted.
+- Functions: Add a doxygen header to functions and separate all functions with a 75 character line such as : //
+- File size: Keep source files under 1000 lines; split by responsibility before crossing this limit.
+- Vocabulary:
   - NEVER use abbreviations; ALWAYS use full words (acronyms are OK).
   - No figurative language: respect the repository vocabulary, use every word in its primary (literal) sense. Name things for what they are, not for what they resemble.
   - No "directory" : use "folder".
@@ -177,12 +177,12 @@ Never leave a blank line in the commit message: lines follow each other directly
 - Analysis and work notes, if any, live in `quick3d/doc/`.
 - Keep these files up to date while working.
 
-**Core Components:**
-- **qt-plus** (`qt-plus/source/cpp`): Shared Qt utility library (logging, XML, singletons, interpolation, geo tools, web, QML tree). Git submodule.
-- **Quick3D** (`quick3d/source/`): Engine library — `base` (components, workers, factory), `mesh` (world terrain/chunks, geometry), `terrain` (patches, height fields), `render` (`CGLWidgetScene`, scene, camera), `math`, `animation`, `components` (vehicles, controllers), `input`, `utils`, `zip`.
-- **Quick3DTest** (`quick3dtest/`): GUI test application + QtTest suites (`quick3dtest/tests/`).
-- **Blender** (`quick3d/blender/`): Q3D export script.
-- **third** (`third/`): Vendored third-party code (`SFML-1.6`, `unzip11`, `zlib` submodule).
+Core Components:
+- qt-plus (`qt-plus/source/cpp`): Shared Qt utility library (logging, XML, singletons, interpolation, geo tools, web, QML tree). Git submodule.
+- Quick3D (`quick3d/source/`): Engine library — `base` (components, workers, factory), `mesh` (world terrain/chunks, geometry), `terrain` (patches, height fields), `render` (`CGLWidgetScene`, scene, camera), `math`, `animation`, `components` (vehicles, controllers), `input`, `utils`, `zip`.
+- Quick3DTest (`quick3dtest/`): GUI test application + QtTest suites (`quick3dtest/tests/`).
+- Blender (`quick3d/blender/`): Q3D export script.
+- third (`third/`): Vendored third-party code (`SFML-1.6`, `unzip11`, `zlib` submodule).
 
 ## Debug Workflow
 1. Reproduce headless first when possible: `Quick3DTest run-tests`.
