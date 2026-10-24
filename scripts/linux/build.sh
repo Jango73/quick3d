@@ -64,6 +64,26 @@ fi
 
 BUILD_DIR="${PROJECT_ROOT_FOLDER}/build-${BUILD_TYPE,,}"
 
+if [ ! -f "${PROJECT_ROOT_FOLDER}/qt-plus/source/cpp/CXMLNode.h" ] \
+  || [ ! -f "${PROJECT_ROOT_FOLDER}/third/JoltPhysics/Build/CMakeLists.txt" ]; then
+  echo "[build] Submodules missing, run ./scripts/linux/deps.sh first." >&2
+  exit "${EXIT_FAILURE}"
+fi
+
+# Find CMake and Ninja
+if ! command -v cmake >/dev/null 2>&1; then
+  echo "[build] cmake not found, run ./scripts/linux/deps.sh first." >&2
+  exit "${EXIT_FAILURE}"
+fi
+
+if ! command -v ninja >/dev/null 2>&1; then
+  echo "[build] ninja not found, run ./scripts/linux/deps.sh first." >&2
+  exit "${EXIT_FAILURE}"
+fi
+
+echo "Using cmake: $(command -v cmake)"
+
+echo "Running cmake with build type ${BUILD_TYPE}..."
 cmake -S "${PROJECT_ROOT_FOLDER}" -B "${BUILD_DIR}" -G Ninja -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
 if [ "${VERBOSE_BUILD}" -eq "${VERBOSE_ENABLED}" ]; then
   cmake --build "${BUILD_DIR}" --verbose

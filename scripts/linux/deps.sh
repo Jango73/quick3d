@@ -10,48 +10,48 @@ EXIT_FAILURE=1
 APT_PACKAGES=(
   build-essential
   cmake
-  ninja-build
   git
   libgl-dev
-  zlib1g-dev
+  libqt6serialport6-dev
+  ninja-build
   qt6-base-dev
   qt6-base-dev-tools
   qt6-declarative-dev
   qt6-multimedia-dev
-  libqt6serialport6-dev
   qt6-positioning-dev
   qt6-tools-dev
   qt6-tools-dev-tools
+  zlib1g-dev
 )
 
 DNF_PACKAGES=(
-  gcc-c++
   cmake
-  ninja-build
+  gcc-c++
   git
   mesa-libGL-devel
-  zlib-devel
+  ninja-build
   qt6-qtbase-devel
   qt6-qtdeclarative-devel
   qt6-qtmultimedia-devel
-  qt6-qtserialport-devel
   qt6-qtpositioning-devel
+  qt6-qtserialport-devel
   qt6-qttools-devel
+  zlib-devel
 )
 
 PACMAN_PACKAGES=(
   base-devel
   cmake
-  ninja
   git
   mesa
-  zlib
+  ninja
   qt6-base
   qt6-declarative
   qt6-multimedia
-  qt6-serialport
   qt6-positioning
+  qt6-serialport
   qt6-tools
+  zlib
 )
 
 install_with_apt() {
