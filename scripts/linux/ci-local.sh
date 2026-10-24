@@ -12,7 +12,7 @@ EXIT_FAILURE=1
 
 usage() {
   cat <<'USAGE'
-Usage: ./ci-local.sh [--debug|--release] [-d|-r] [-c Debug|Release]
+Usage: ./ci-local.sh [--debug|--release] [-d|-r] [-c Debug|Release] [-h|--help]
   --debug,   -d  Build type Debug
   --release, -r  Build type Release (default, same as CI)
   -c             Build type (Debug or Release)
@@ -74,7 +74,7 @@ if [ ! -f "${BINARY}" ]; then
   exit "${EXIT_FAILURE}"
 fi
 
-mkdir -p "${PROJECT_ROOT_FOLDER}/tmp"
+mkdir -p "$(dirname "${LOG_FILE}")"
 echo "[ci-local] Running tests (logging to ${LOG_FILE})..."
 QT_QPA_PLATFORM=offscreen \
   "${BINARY}" run-tests 2>&1 | tee "${LOG_FILE}"

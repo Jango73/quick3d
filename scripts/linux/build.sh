@@ -14,9 +14,9 @@ VERBOSE_BUILD="${VERBOSE_DISABLED}"
 
 usage() {
   cat <<'USAGE'
-Usage: ./build.sh [--debug|--release] [-d|-r] [--verbose|-v] [-c Debug|Release]
-  --debug,   -d  Build type Debug (default)
-  --release, -r  Build type Release
+Usage: ./build.sh [--debug|--release] [-d|-r] [--verbose|-v] [-c Debug|Release] [-h|--help]
+  --debug,   -d  Build type Debug
+  --release, -r  Build type Release (default)
   --verbose, -v  Verbose build output
   -c             Build type (Debug or Release)
 USAGE

@@ -14,9 +14,9 @@ VERBOSE_BUILD="${VERBOSE_DISABLED}"
 
 usage() {
   cat <<'USAGE'
-Usage: ./run.sh [--debug|--release] [-d|-r] [--verbose|-v] [-c Debug|Release] [-- <app args>]
-  --debug,   -d  Build type Debug (default)
-  --release, -r  Build type Release
+Usage: ./run.sh [--debug|--release] [-d|-r] [--verbose|-v] [-c Debug|Release] [-h|--help] [-- <app args>]
+  --debug,   -d  Build type Debug
+  --release, -r  Build type Release (default)
   --verbose, -v  Verbose build output
   -c             Build type (Debug or Release)
   Extra arguments after -- are forwarded to Quick3DTest (eg. -- run-tests).
@@ -91,6 +91,6 @@ if [ ! -f "${BINARY}" ]; then
   exit "${EXIT_FAILURE}"
 fi
 
-mkdir -p "${PROJECT_ROOT_FOLDER}/tmp"
+mkdir -p "$(dirname "${LOG_FILE}")"
 echo "[run] Logging to ${LOG_FILE}"
 exec "${BINARY}" "${FORWARD_ARGS[@]}" 2>&1 | tee "${LOG_FILE}"
